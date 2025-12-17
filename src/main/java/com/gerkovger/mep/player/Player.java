@@ -1,6 +1,5 @@
 package com.gerkovger.mep.player;
 
-import com.gerkovger.mep.config.Config;
 import com.gerkovger.mep.logging.MepLogger;
 import com.gerkovger.mep.persistence.MetaDataRepository;
 
@@ -13,8 +12,6 @@ import java.util.concurrent.TimeUnit;
 public class Player {
 
     private static final MepLogger log = MepLogger.INSTANCE;
-
-    private static final Config conf = Config.INSTANCE;
 
     private static final String[] MPLAYER_CMD =
             new String[] {"gnome-session-inhibit", "--inhibit", "idle",
@@ -39,7 +36,7 @@ public class Player {
         this.sourceProvider = sourceProvider;
         this.metaDataRepository = sourceProvider.getMetaDataRepository();
 
-        log.info("Creating player with playlist: {}", sourceProvider);
+        log.debug("Creating player with playlist: {}", sourceProvider);
     }
 
     public void start() {

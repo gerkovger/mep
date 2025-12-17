@@ -45,7 +45,7 @@ public class Reader implements Runnable {
                     if (metaData != null && metaData.containsKey("length")) {
                         var l = Float.parseFloat(metaData.get("length"));
                         if (l - vPos < Config.INSTANCE.getEndThresholdSeconds()) {
-                            log.info("Reached the end of {}", metaData.get("path"));
+                            log.info("Reached the end of {}", Path.of(metaData.get("path")));
                             metaData.put("time_pos", "0");
 //                            playNext();
                         }
@@ -64,12 +64,12 @@ public class Reader implements Runnable {
                     var fileName = line.substring(8, j);
                     log.info("Starting playing '{}'", Path.of(fileName));
                     metaData = repo.get(fileName);
+                } else if (line.equals(MP_MSG_NULL_PATH)) {
+                    playNext();
                 } else if (line.startsWith("ANS_") && metaData != null) {
                     var kv = line.substring(4);
                     var pt = kv.split("=");
                     metaData.put(pt[0], pt[1]);
-                } else if (line.equals(MP_MSG_NULL_PATH)) {
-                    playNext();
                 } else if (line.trim().equals(MP_MSG_PAUSE)) {
                     sendOut(MSG_PAUSE);
                 } else if (line.startsWith(MP_MSG_NO_BIND)) {
@@ -122,11 +122,6 @@ public class Reader implements Runnable {
         } catch (NumberFormatException e) {
             throw new RuntimeException(sb.toString());
         }
-    }
-
-    static void main() {
-        var line = "A:   0.1 V:   0.0 A-V:  0.061 ct:  0.000   0/  0 ??% ??% ??,?% 0 0";
-        System.out.println(getVPos(line));
     }
 
 }
