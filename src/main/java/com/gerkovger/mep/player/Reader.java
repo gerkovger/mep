@@ -47,7 +47,9 @@ public class Reader implements Runnable {
                         if (l - vPos < Config.INSTANCE.getEndThresholdSeconds()) {
                             log.info("Reached the end of {}", Path.of(metaData.get("path")));
                             metaData.put("time_pos", "0");
-//                            playNext();
+                            playNext();
+
+
                         }
                     }
                 }
@@ -65,6 +67,7 @@ public class Reader implements Runnable {
                     log.info("Starting playing '{}'", Path.of(fileName));
                     metaData = repo.get(fileName);
                 } else if (line.equals(MP_MSG_NULL_PATH)) {
+                    log.debug("{} -> finished?", MP_MSG_NULL_PATH);
                     playNext();
                 } else if (line.startsWith("ANS_") && metaData != null) {
                     var kv = line.substring(4);

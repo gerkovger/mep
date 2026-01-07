@@ -6,6 +6,7 @@ import java.io.PrintStream;
 import java.io.PrintWriter;
 import java.io.StringWriter;
 import java.nio.file.Path;
+import java.util.Arrays;
 import java.util.Objects;
 
 import static com.gerkovger.mep.logging.Colors.*;
@@ -95,8 +96,9 @@ public enum MepLogger {
     }
 
     private static String paramToString(Object o) {
+        if (o == null) return "null";
+        if (o.getClass().isArray()) return Arrays.toString((Object[]) o);
         return switch (o) {
-            case null -> "null";
             case Throwable t -> parseThrowable(t);
             case Path p -> parsePath(p);
             default -> o.toString();

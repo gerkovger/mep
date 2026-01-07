@@ -8,7 +8,9 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardOpenOption;
 import java.util.Arrays;
+import java.util.List;
 import java.util.Objects;
+import java.util.StringJoiner;
 
 public class MetaDataRepository {
 
@@ -22,7 +24,7 @@ public class MetaDataRepository {
         log.info("Finding metadata for path '{}'", Path.of(path));
         if (!Files.exists(Config.INSTANCE.getMetaDataStorePath())) return new MetaData();
         try (var lines = Files.lines(Config.INSTANCE.getMetaDataStorePath())) {
-            String kv = lines.filter(line -> lineHasPath(line, path))
+            String kv = lines.filter(line -> lineContainsPath(line, path))
                     .map(line -> line.substring(line.lastIndexOf(";") + 1))
                     .findFirst()
                     .orElse("");
@@ -36,15 +38,10 @@ public class MetaDataRepository {
 
     public boolean repoContains(Path path) {
         try (var lines = Files.lines(Config.INSTANCE.getMetaDataStorePath())) {
-            return lines.anyMatch(line -> lineHasPath(line, path.toAbsolutePath().toString()));
+            return lines.anyMatch(line -> lineContainsPath(line, path.toAbsolutePath().toString()));
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
-    }
-
-    private static boolean lineHasPath(String line, String path) {
-        var pt = line.split(";");
-        return pt.length == 3 && Objects.equals(pt[0], path);
     }
 
     public void saveOrUpdateRepository(MetaData metaData) {
@@ -53,7 +50,7 @@ public class MetaDataRepository {
         if (Files.exists(repositoryPath)) {
             try (var lines = Files.lines(repositoryPath)) {
                 lines
-                        .filter(line -> !lineHasPath(line, metaData.get("path")))
+                        .filter(line -> !lineContainsPath(line, metaData.get("path")))
                         .forEach(line -> sb.append("\n").append(line));
             } catch (IOException e) {
                 throw new RuntimeException(e);
@@ -62,7 +59,7 @@ public class MetaDataRepository {
         writeRepo(sb.toString());
     }
 
-    private void writeRepo(String repoLines) {
+    private static void writeRepo(String repoLines) {
         try {
             Files.writeString(
                     Config.INSTANCE.getMetaDataStorePath(),
@@ -80,6 +77,31 @@ public class MetaDataRepository {
                 .map(elem -> elem.split("="))
                 .forEach(arr -> md.put(arr[0], arr[1]));
         return md;
+    }
+
+    public static void delete(List<String> paths) {
+        try (var lines = Files.lines(Config.INSTANCE.getMetaDataStorePath())) {
+            StringJoiner remainingLines = new StringJoiner("\n");
+            lines.filter(line -> !lineContainsAny(line, paths))
+                    .forEach(remainingLines::add);
+            log.info("Deleting paths: {}", paths);
+            log.info("Remaining:\n{}", remainingLines);
+            writeRepo(remainingLines.toString());
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    private static boolean lineContainsPath(String line, String path) {
+        var pt = line.split(";");
+        return pt.length == 3 && Objects.equals(pt[0], path);
+    }
+
+    private static boolean lineContainsAny(String line, List<String> paths) {
+        for (String path : paths) {
+            if (lineContainsPath(line, path)) return true;
+        }
+        return false;
     }
 
 }

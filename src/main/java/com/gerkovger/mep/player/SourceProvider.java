@@ -64,7 +64,7 @@ public class SourceProvider {
     }
 
     private static final Set<String> mediaTypes = Config.INSTANCE.getMediaTypes();
-    private static boolean isMediaType(Path p) {
+    public static boolean isMediaType(Path p) {
         var fileName = p.toString();
         var i = fileName.lastIndexOf(".");
         return i != -1 && mediaTypes.contains(fileName.substring(i + 1));
